@@ -104,7 +104,7 @@ class _CustomerShellState extends State<CustomerShell>
           setState(() => progress[index] = (progress[index] + 8).clamp(0, 100)),
       onSelectLanguage: (language) => setState(() {
         selectedLanguage = language;
-        activeMenu = 'Lesson';
+        activeMenu = 'Languages';
       }),
       onOpenLanguages: () => setState(() => activeMenu = 'Languages'),
       onOpenDashboard: () => setState(() => activeMenu = 'Dashboard'),
@@ -506,7 +506,7 @@ class _CenterContent extends StatelessWidget {
   final bool streakActive;
   final List<int> progress;
   final ValueChanged<int> onProgressTap;
-  final ValueChanged<Language> onSelectLanguage;
+  final ValueChanged<Language?> onSelectLanguage;
   final VoidCallback onOpenLanguages;
   final VoidCallback onOpenDashboard;
   final Language? selectedLanguage;
@@ -514,10 +514,16 @@ class _CenterContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (activeMenu == 'Languages') {
-      return _LanguagesPage(onOpenDashboard: onOpenDashboard);
-    }
-    if (activeMenu == 'Lesson' && selectedLanguage != null) {
-      return LessonPage(language: selectedLanguage!);
+      if (selectedLanguage != null) {
+        return LessonPage(
+          language: selectedLanguage!,
+          onBack: () => onSelectLanguage(null),
+        );
+      }
+      return _LanguagesPage(
+        onOpenDashboard: onOpenDashboard,
+        onSelectLanguage: onSelectLanguage,
+      );
     }
     if (activeMenu == 'Vocabulary') return const _LettersPage();
     if (activeMenu == 'Progress') {
@@ -653,8 +659,12 @@ class _DashboardStreak extends StatelessWidget {
 }
 
 class _LanguagesPage extends StatelessWidget {
-  const _LanguagesPage({required this.onOpenDashboard});
+  const _LanguagesPage({
+    required this.onOpenDashboard,
+    required this.onSelectLanguage,
+  });
   final VoidCallback onOpenDashboard;
+  final ValueChanged<Language> onSelectLanguage;
 
   @override
   Widget build(BuildContext context) {
@@ -727,12 +737,7 @@ class _LanguagesPage extends StatelessWidget {
                         (language) => _LanguageProgressCard(
                           language: language,
                           width: cardWidth,
-                          onStart: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => LessonPage(language: language),
-                            ),
-                          ),
+                          onStart: () => onSelectLanguage(language),
                         ),
                       )
                       .toList(),
@@ -850,14 +855,16 @@ class _LanguageProgressCard extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           height: 34,
-          child: OutlinedButton(
+          child: ElevatedButton(
             onPressed: onStart,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _indigoBright,
-              side: const BorderSide(color: _indigo),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _indigo,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(7),
               ),
+              elevation: 0,
+              shadowColor: const Color(0x664c1d95),
             ),
             child: const Text('Start Learning'),
           ),
@@ -2062,8 +2069,9 @@ class _AchievementsPage extends StatelessWidget {
 }
 
 class LessonPage extends StatelessWidget {
-  const LessonPage({required this.language, super.key});
+  const LessonPage({required this.language, required this.onBack, super.key});
   final Language language;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -2072,70 +2080,105 @@ class LessonPage extends StatelessWidget {
       future: repository.getLessons(language.id),
       builder: (context, snapshot) {
         final lessons = snapshot.data ?? const <Lesson>[];
-        return ListView(
-          padding: const EdgeInsets.all(28),
+        return Column(
           children: [
-            Text(
-              '${language.icon}  ${language.name}',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(28, 28, 28, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: onBack,
+                    icon: const Icon(Icons.arrow_back, color: _indigoBright),
+                    style: IconButton.styleFrom(
+                      backgroundColor: _panel,
+                      padding: const EdgeInsets.all(12),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      '${language.icon}  ${language.name}',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Choose a lesson and keep moving forward.',
-              style: TextStyle(color: _muted),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: const Text(
+                'Choose a lesson and keep moving forward.',
+                style: TextStyle(color: _muted),
+              ),
             ),
             const SizedBox(height: 22),
-            ...lessons.map(
-              (lesson) => Card(
-                color: _panel,
-                surfaceTintColor: Colors.transparent,
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  title: Text(
-                    lesson.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  subtitle: Text(
-                    lesson.summary,
-                    style: const TextStyle(color: _muted),
-                  ),
-                  trailing: Wrap(
-                    spacing: 8,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () async {
-                          await context
-                              .read<AppState>()
-                              .recordLearningActivity();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Materi selesai. Streak diperbarui.',
-                              ),
-                            ),
-                          );
-                        },
-                        child: const Text('Selesai'),
-                      ),
-                      FilledButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => QuizPage(language: language),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                children: [
+                  ...lessons.map(
+                    (lesson) => Card(
+                      color: _panel,
+                      surfaceTintColor: Colors.transparent,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Text(
+                          lesson.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
-                        child: const Text('Practice'),
+                        subtitle: Text(
+                          lesson.summary,
+                          style: const TextStyle(color: _muted),
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          children: [
+                            OutlinedButton(
+                              onPressed: () async {
+                                await context
+                                    .read<AppState>()
+                                    .recordLearningActivity();
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Materi selesai. Streak diperbarui.',
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _indigoBright,
+                                side: const BorderSide(color: _indigo),
+                              ),
+                              child: const Text('Selesai'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => QuizPage(language: language),
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _indigo,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Practice'),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],

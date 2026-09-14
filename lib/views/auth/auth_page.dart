@@ -75,53 +75,32 @@ class _AuthPageState extends State<AuthPage> {
     
     return Scaffold(
       backgroundColor: const Color(0xff1a0b2e),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final form = _LoginForm(
-            formKey: formKey,
-            nameController: nameController,
-            emailController: emailController,
-            passwordController: passwordController,
-            confirmPasswordController: confirmPasswordController,
-            registerMode: registerMode,
-            busy: busy,
-            obscurePassword: obscurePassword,
-            obscureConfirmPassword: obscureConfirmPassword,
-            onTogglePassword: () =>
-                setState(() => obscurePassword = !obscurePassword),
-            onToggleConfirmPassword: () =>
-                setState(() => obscureConfirmPassword = !obscureConfirmPassword),
-            onSubmit: submit,
-            onToggleMode: () => setState(() => registerMode = !registerMode),
-            onBackToWelcome: () => setState(() => showWelcomeScreen = true),
-          );
-          if (constraints.maxWidth < 900) {
-            return SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: form,
-                ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(vertical: 64, horizontal: 24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 450),
+              child: _LoginForm(
+                formKey: formKey,
+                nameController: nameController,
+                emailController: emailController,
+                passwordController: passwordController,
+                confirmPasswordController: confirmPasswordController,
+                registerMode: registerMode,
+                busy: busy,
+                obscurePassword: obscurePassword,
+                obscureConfirmPassword: obscureConfirmPassword,
+                onTogglePassword: () =>
+                    setState(() => obscurePassword = !obscurePassword),
+                onToggleConfirmPassword: () =>
+                    setState(() => obscureConfirmPassword = !obscureConfirmPassword),
+                onSubmit: submit,
+                onToggleMode: () => setState(() => registerMode = !registerMode),
               ),
-            );
-          }
-          return Row(
-            children: [
-              Expanded(
-                child: Container(
-                  color: const Color(0xff1a0b2e),
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(64),
-                      child: form,
-                    ),
-                  ),
-                ),
-              ),
-              const Expanded(child: _AuthIllustration()),
-            ],
-          );
-        },
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -398,7 +377,6 @@ class _LoginForm extends StatelessWidget {
     required this.onToggleConfirmPassword,
     required this.onSubmit,
     required this.onToggleMode,
-    required this.onBackToWelcome,
   });
 
   final GlobalKey<FormState> formKey;
@@ -414,7 +392,6 @@ class _LoginForm extends StatelessWidget {
   final VoidCallback onToggleConfirmPassword;
   final VoidCallback onSubmit;
   final VoidCallback onToggleMode;
-  final VoidCallback onBackToWelcome;
 
   @override
   Widget build(BuildContext context) {
@@ -560,14 +537,6 @@ class _LoginForm extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextButton(
-                  onPressed: onBackToWelcome,
-                  child: const Text(
-                    'Back',
-                    style: TextStyle(color: Color(0xffa78bfa)),
-                  ),
-                ),
-                const SizedBox(width: 8),
                 TextButton(
                   onPressed: onToggleMode,
                   child: Text(
