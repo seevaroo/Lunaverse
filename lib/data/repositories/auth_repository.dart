@@ -7,6 +7,8 @@ abstract class AuthRepository {
   Future<AppUser> signIn(String email, String password);
   Future<RegistrationResult> register(String name, String email, String password);
   Future<void> signOut();
+  Future<void> updateName(String name);
+  Future<void> updatePassword(String currentPassword, String newPassword);
 }
 
 class RegistrationResult {
@@ -59,6 +61,32 @@ class SupabaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() => _client.auth.signOut();
+
+  @override
+  Future<void> updateName(String name) async {
+    await _client.auth.updateUser(
+      UserAttributes(data: {'name': name}),
+    );
+  }
+
+  @override
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    final user = _client.auth.currentUser;
+    if (user == null) {
+      throw const AuthException('User tidak ditemukan.');
+    }
+    
+    // Verify current password by signing in again
+    await _client.auth.signInWithPassword(
+      email: user.email!,
+      password: currentPassword,
+    );
+    
+    // Update password
+    await _client.auth.updateUser(
+      UserAttributes(password: newPassword),
+    );
+  }
 }
 
 class UnavailableAuthRepository implements AuthRepository {
@@ -79,4 +107,14 @@ class UnavailableAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {}
+
+  @override
+  Future<void> updateName(String name) async {
+    throw const AuthException('Supabase belum terhubung.');
+  }
+
+  @override
+  Future<void> updatePassword(String currentPassword, String newPassword) async {
+    throw const AuthException('Supabase belum terhubung.');
+  }
 }

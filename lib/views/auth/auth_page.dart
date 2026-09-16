@@ -509,7 +509,7 @@ class _LoginForm extends StatelessWidget {
             ],
             const SizedBox(height: 24),
             SizedBox(
-              width: double.infinity,
+              width: 200,
               height: 52,
               child: ElevatedButton(
                 onPressed: busy ? null : onSubmit,

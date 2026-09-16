@@ -167,13 +167,6 @@ class _CustomerShellState extends State<CustomerShell>
             icon: const Icon(Icons.menu),
           ),
         ),
-        actions: [
-          IconButton(
-            onPressed: state.signOut,
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-          ),
-        ],
       ),
       body: center,
     );
@@ -1970,7 +1963,7 @@ class _SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<_SettingsPage> {
   // Account fields
-  final TextEditingController _nameController = TextEditingController(text: 'Alvaro R');
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
   // Learning & Notifications
@@ -1984,6 +1977,23 @@ class _SettingsPageState extends State<_SettingsPage> {
 
   // Modal state
   String? _activeModal;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final state = context.read<AppState>();
+    final user = await state.authRepository.restoreSession();
+    if (user != null) {
+      setState(() {
+        _nameController.text = user.name;
+        _emailController.text = user.email;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -2226,10 +2236,6 @@ class _SettingsPageState extends State<_SettingsPage> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          
-          // Logout Button
-          _buildLogoutButton(),
           const SizedBox(height: 32),
         ],
       ),
@@ -2269,9 +2275,9 @@ class _SettingsPageState extends State<_SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Alvaro R',
-                    style: TextStyle(
+                  Text(
+                    _nameController.text.isNotEmpty ? _nameController.text : 'Loading...',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -2587,8 +2593,8 @@ class _SettingsPageState extends State<_SettingsPage> {
         const SizedBox(height: 8),
         TextFormField(
           controller: _emailController,
-          keyboardType: TextInputType.emailAddress,
-          style: const TextStyle(color: Colors.white),
+          enabled: false,
+          style: const TextStyle(color: _muted),
           decoration: InputDecoration(
             filled: true,
             fillColor: _pageBackground,
@@ -2600,9 +2606,9 @@ class _SettingsPageState extends State<_SettingsPage> {
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: _border),
             ),
-            focusedBorder: OutlineInputBorder(
+            disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: _indigo, width: 2),
+              borderSide: const BorderSide(color: _border),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
@@ -2612,14 +2618,27 @@ class _SettingsPageState extends State<_SettingsPage> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: () {
-              setState(() => _activeModal = null);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Data berhasil disimpan'),
-                  backgroundColor: _indigo,
-                ),
-              );
+            onPressed: () async {
+              try {
+                final state = context.read<AppState>();
+                await state.authRepository.updateName(_nameController.text);
+                await state.refreshUser();
+                await _loadUserData();
+                setState(() => _activeModal = null);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Nama berhasil diubah'),
+                    backgroundColor: _indigo,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal mengubah nama: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _indigo,
@@ -2636,6 +2655,10 @@ class _SettingsPageState extends State<_SettingsPage> {
   }
 
   Widget _buildPasswordForm() {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2645,6 +2668,7 @@ class _SettingsPageState extends State<_SettingsPage> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          controller: currentPasswordController,
           obscureText: true,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
@@ -2672,6 +2696,7 @@ class _SettingsPageState extends State<_SettingsPage> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          controller: newPasswordController,
           obscureText: true,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
@@ -2699,6 +2724,7 @@ class _SettingsPageState extends State<_SettingsPage> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          controller: confirmPasswordController,
           obscureText: true,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
@@ -2724,14 +2750,49 @@ class _SettingsPageState extends State<_SettingsPage> {
           width: double.infinity,
           height: 48,
           child: ElevatedButton(
-            onPressed: () {
-              setState(() => _activeModal = null);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Kata sandi berhasil diubah'),
-                  backgroundColor: _indigo,
-                ),
-              );
+            onPressed: () async {
+              final currentPassword = currentPasswordController.text;
+              final newPassword = newPasswordController.text;
+              final confirmPassword = confirmPasswordController.text;
+
+              if (newPassword.length < 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Password minimal 6 karakter'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              if (newPassword != confirmPassword) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Konfirmasi password tidak cocok'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              try {
+                final state = context.read<AppState>();
+                await state.authRepository.updatePassword(currentPassword, newPassword);
+                setState(() => _activeModal = null);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Kata sandi berhasil diubah'),
+                    backgroundColor: _indigo,
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Gagal mengubah kata sandi: $e'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: _indigo,

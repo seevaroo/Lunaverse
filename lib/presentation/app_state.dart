@@ -47,6 +47,11 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshUser() async {
+    currentUser = await authRepository.restoreSession();
+    notifyListeners();
+  }
+
   Future<void> recordLearningActivity() async {
     final user = currentUser;
     if (user == null) return;
