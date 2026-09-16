@@ -1017,8 +1017,7 @@ class _StatCard extends StatelessWidget {
     required this.value,
     required this.color,
     required this.width,
-    this.muted = false,
-  });
+  }) : muted = false;
   final IconData icon;
   final String label;
   final String value;
@@ -1414,7 +1413,7 @@ class _ProgressCard extends StatelessWidget {
                   TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0, end: value / 100),
                     duration: const Duration(milliseconds: 450),
-                    builder: (_, animated, __) => LinearProgressIndicator(
+                    builder: (_, animated, _) => LinearProgressIndicator(
                       value: animated,
                       minHeight: 5,
                       borderRadius: BorderRadius.circular(8),
@@ -1972,7 +1971,7 @@ class _SettingsPageState extends State<_SettingsPage> {
 
   // Preferences
   bool _darkMode = true;
-  bool _soundEffects = true;
+  final bool _soundEffects = true;
   String _selectedLanguage = 'Indonesia';
 
   // Modal state
@@ -2064,7 +2063,7 @@ class _SettingsPageState extends State<_SettingsPage> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: _indigo.withOpacity(0.2),
+            color: _indigo.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
@@ -2116,7 +2115,7 @@ class _SettingsPageState extends State<_SettingsPage> {
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isSelected ? _indigo.withOpacity(0.2) : Colors.transparent,
+            color: isSelected ? _indigo.withValues(alpha: 0.2) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -2289,7 +2288,7 @@ class _SettingsPageState extends State<_SettingsPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _indigo.withOpacity(0.2),
+                          color: _indigo.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Text(
@@ -2427,7 +2426,7 @@ class _SettingsPageState extends State<_SettingsPage> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: _indigo,
+            activeThumbColor: _indigo,
           ),
         ],
       ),
@@ -2469,7 +2468,7 @@ class _SettingsPageState extends State<_SettingsPage> {
     return GestureDetector(
       onTap: () => setState(() => _activeModal = null),
       child: Container(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         child: Center(
           child: GestureDetector(
             onTap: () {},
@@ -2822,7 +2821,7 @@ class _SettingsPageState extends State<_SettingsPage> {
             'Terima pengingat belajar setiap hari',
             style: TextStyle(color: _muted, fontSize: 13),
           ),
-          activeColor: _indigo,
+          activeThumbColor: _indigo,
           contentPadding: EdgeInsets.zero,
         ),
         const Divider(color: _border),
@@ -2833,7 +2832,7 @@ class _SettingsPageState extends State<_SettingsPage> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _learningTarget,
+          initialValue: _learningTarget,
           decoration: InputDecoration(
             filled: true,
             fillColor: _pageBackground,
@@ -3360,7 +3359,7 @@ class _QuizPageState extends State<QuizPage> {
       return;
     }
     final score = (correct / questions.length * 100).round();
-    if (score >= 70)
+    if (score >= 70) {
       await context.read<AppState>().learningRepository.saveAttempt(
         context.read<AppState>().currentUser!.id,
         QuizAttempt(
@@ -3369,6 +3368,7 @@ class _QuizPageState extends State<QuizPage> {
           date: DateTime.now(),
         ),
       );
+    }
     await context.read<AppState>().recordLearningActivity();
     showDialog(
       context: context,
@@ -3401,8 +3401,9 @@ class _QuizPageState extends State<QuizPage> {
         future: repository.getQuiz(widget.language.id),
         builder: (context, snapshot) {
           final questions = snapshot.data ?? const <QuizQuestion>[];
-          if (questions.isEmpty)
+          if (questions.isEmpty) {
             return const Center(child: CircularProgressIndicator());
+          }
           final question = questions[questionIndex];
           return ListView(
             padding: const EdgeInsets.all(28),

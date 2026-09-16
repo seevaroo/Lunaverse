@@ -87,8 +87,9 @@ class _AppRouter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    if (state.isLoading)
+    if (state.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (state.currentUser == null) return const AuthPage();
     return state.currentUser!.role == UserRole.admin
         ? const AdminShell()

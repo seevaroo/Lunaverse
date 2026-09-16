@@ -14,8 +14,9 @@ class AppState extends ChangeNotifier {
   UserStreak streak = const UserStreak(count: 0, lastActivityDate: null);
   Future<void> restoreSession() async {
     currentUser = await authRepository.restoreSession();
-    if (currentUser != null)
+    if (currentUser != null) {
       streak = await learningRepository.getStreak(currentUser!.id);
+    }
     isLoading = false;
     notifyListeners();
   }

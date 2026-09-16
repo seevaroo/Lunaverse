@@ -124,7 +124,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xffa855f7).withOpacity(0.2),
+                    color: const Color(0xffa855f7).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -263,7 +263,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xffa855f7).withOpacity(0.2),
+                    color: const Color(0xffa855f7).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -308,7 +308,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   fontSize: 13,
                 ),
               ),
-              activeColor: const Color(0xffa855f7),
+              activeThumbColor: const Color(0xffa855f7),
               contentPadding: EdgeInsets.zero,
             ),
             const Divider(color: Color(0xff2d2640)),
@@ -327,7 +327,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _learningTarget,
+                  initialValue: _learningTarget,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: const Color(0xff0d0721),
@@ -396,7 +396,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xffa855f7).withOpacity(0.2),
+                    color: const Color(0xffa855f7).withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -441,7 +441,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   fontSize: 13,
                 ),
               ),
-              activeColor: const Color(0xffa855f7),
+              activeThumbColor: const Color(0xffa855f7),
               contentPadding: EdgeInsets.zero,
             ),
             const Divider(color: Color(0xff2d2640)),
@@ -469,7 +469,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   fontSize: 13,
                 ),
               ),
-              activeColor: const Color(0xffa855f7),
+              activeThumbColor: const Color(0xffa855f7),
               contentPadding: EdgeInsets.zero,
             ),
           ],
